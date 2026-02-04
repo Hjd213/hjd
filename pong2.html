@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    canvas { display: block; margin: 20px auto; background: #000; }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // Constants
+  const paddleWidth = 10, paddleHeight = 80, ballSize = 10;
+  const canvasWidth = canvas.width, canvasHeight = canvas.height;
+
+  // State
+  const paddles = [
+    { x: 10, y: canvasHeight / 2 - paddleHeight / 2, vy: 0, score: 0 }, // Left paddle
+    { x: canvasWidth - 20, y: canvasHeight / 2 - paddleHeight / 2, vy: 0, score: 0 }, // Right paddle
+  ];
+  const ball = { x: canvasWidth / 2, y: canvasHeight / 2, vx: 3, vy: 2 };
+
+  // Draw functions
+  function drawRect(x, y, width, height, color) {
+    ctx.fillStyle = color || 'white';
+    ctx.fillRect(x, y, width, height);
+  }
+
+  function drawCircle(x, y, radius, color) {
+    ctx.fillStyle = color || 'white';
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawScore() {
+    ctx.font = '40px Arial';
+    ctx.fillStyle = 'white';
+    ctx.fillText(paddles[0].score, canvasWidth / 4, 50);
+    ctx.fillText(paddles[1].score, (canvasWidth / 4) * 3, 50);
+  }
+
+  function moveBall() {
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    // Ball collision with top and bottom
+    if (ball.y <= 0 || ball.y + ballSize >= canvasHeight) {
+      ball.vy *= -1;
+    }
+
+    // Ball collision with paddles
+    paddles.forEach((paddle, index) => {
+      if (
+        ball.x < paddle.x + paddleWidth &&
+        ball.x + ballSize > paddle.x &&
+        ball.y < paddle.y + paddleHeight &&
+        ball.y + ballSize > paddle.y
+      ) {
+        ball.vx *= -1.1; // Reverse and slightly increase speed
+        ball.vy += (Math.random() - 0.5); // Add slight randomness to bounce
+      }
+    });
+
+    // Ball out of bounds
+    if (ball.x <= 0) {
+      paddles[1].score++;
+      resetBall();
+    } else if (ball.x >= canvasWidth) {
+      paddles[0].score++;
+      resetBall();
+    }
+  }
+
+  function resetBall() {
+    ball.x = canvasWidth / 2;
+    ball.y = canvasHeight / 2;
+    ball.vx = 3 * (Math.random() > 0.5 ? 1 : -1); // Reset speed
+    ball.vy = 2 * (Math.random() > 0.5 ? 1 : -1);
+  }
+
+  function movePaddles() {
+    paddles.forEach((paddle) => {
+      paddle.y += paddle.vy;
+      if (paddle.y < 0) paddle.y = 0;
+      if (paddle.y + paddleHeight > canvasHeight) paddle.y = canvasHeight - paddleHeight;
+    });
+  }
+
+  // Key events
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'w') paddles[0].vy = -5;
+    if (e.key === 's') paddles[0].vy = 5;
+    if (e.key === 'ArrowUp') paddles[1].vy = -5;
+    if (e.key === 'ArrowDown') paddles[1].vy = 5;
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (e.key === 'w' || e.key === 's') paddles[0].vy = 0;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') paddles[1].vy = 0;
+  });
+
+  // Game loop
+  function gameLoop() {
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    drawRect(0, 0, canvasWidth, canvasHeight, 'black'); // Background
+    drawRect(paddles[0].x, paddles[0].y, paddleWidth, paddleHeight);
+    drawRect(paddles[1].x, paddles[1].y, paddleWidth, paddleHeight);
+    drawCircle(ball.x, ball.y, ballSize, 'white');
+    drawScore();
+
+    movePaddles();
+    moveBall();
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+</script>
+</body>
+</html>
